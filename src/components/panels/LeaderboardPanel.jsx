@@ -16,10 +16,10 @@ export default function LeaderboardPanel() {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      background: 'linear-gradient(160deg, rgba(22, 14, 8, 0.94), rgba(12, 8, 5, 0.96))',
-      border: '2px solid rgba(245, 200, 66, 0.35)',
+      background: 'linear-gradient(165deg, rgba(28, 18, 12, 0.96) 0%, rgba(18, 11, 7, 0.98) 100%)',
+      border: '2px solid #D4952A',
       borderRadius: 14,
-      boxShadow: '0 8px 32px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,248,231,0.1)',
+      boxShadow: '0 8px 32px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(245, 200, 66, 0.4), inset 0 1px 0 rgba(255, 248, 231, 0.15)',
       padding: '12px 14px',
       gap: 8,
       overflow: 'hidden',
@@ -29,7 +29,7 @@ export default function LeaderboardPanel() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        borderBottom: '1px solid rgba(245,200,66,0.25)',
+        borderBottom: '1px solid rgba(245, 200, 66, 0.25)',
         paddingBottom: 6,
       }}>
         <div style={{
@@ -61,6 +61,7 @@ export default function LeaderboardPanel() {
                 padding: '2px 6px',
                 borderRadius: 10,
                 letterSpacing: 1,
+                boxShadow: '0 0 8px rgba(245,200,66,0.6)',
               }}
             >
               NEW LEADER!
@@ -82,11 +83,11 @@ export default function LeaderboardPanel() {
               gap: 8,
               width: '100%',
               background: rank === 0
-                ? 'linear-gradient(90deg, rgba(245,200,66,0.18), rgba(200,100,10,0.08))'
+                ? 'linear-gradient(90deg, rgba(245,200,66,0.2), rgba(200,100,10,0.1))'
                 : 'rgba(255,255,255,0.04)',
               borderRadius: 8,
               padding: '6px 8px',
-              border: rank === 0 ? '1px solid rgba(245,200,66,0.45)' : '1px solid rgba(255,255,255,0.08)',
+              border: rank === 0 ? '1.5px solid rgba(245,200,66,0.5)' : '1px solid rgba(255,255,255,0.08)',
             }}
           >
             {/* Medal */}
@@ -104,7 +105,7 @@ export default function LeaderboardPanel() {
               <div style={{
                 fontFamily: 'Cinzel, serif',
                 fontWeight: 700,
-                fontSize: 'clamp(0.6rem, 1vw, 0.78rem)',
+                fontSize: 'clamp(0.62rem, 1vw, 0.8rem)',
                 color: rank === 0 ? '#F5C842' : '#FFF8E7',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',

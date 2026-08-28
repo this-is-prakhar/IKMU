@@ -16,14 +16,15 @@ export default function TimerPanel() {
     return (
       <div style={{
         width: '100%',
-        background: 'linear-gradient(160deg, rgba(22, 14, 8, 0.94), rgba(12, 8, 5, 0.96))',
-        border: '1.5px solid rgba(245, 200, 66, 0.25)',
-        borderRadius: 10,
+        background: 'linear-gradient(165deg, rgba(28, 18, 12, 0.96) 0%, rgba(18, 11, 7, 0.98) 100%)',
+        border: '2px solid #D4952A',
+        borderRadius: 14,
         padding: '6px 12px',
         textAlign: 'center',
         fontFamily: 'Cinzel, serif',
         fontSize: '0.65rem',
         color: 'rgba(245,237,208,0.5)',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(245, 200, 66, 0.4), inset 0 1px 0 rgba(255, 248, 231, 0.15)',
       }}>
         ⏱ UNTIMED ROUND
       </div>
@@ -41,12 +42,12 @@ export default function TimerPanel() {
       display: 'flex',
       flexDirection: 'column',
       alignItems: 'center',
-      background: 'linear-gradient(160deg, rgba(22, 14, 8, 0.94), rgba(12, 8, 5, 0.96))',
-      border: `2px solid ${isUrgent ? '#FF4400' : 'rgba(245, 200, 66, 0.35)'}`,
-      borderRadius: 12,
+      background: 'linear-gradient(165deg, rgba(28, 18, 12, 0.96) 0%, rgba(18, 11, 7, 0.98) 100%)',
+      border: `2px solid ${isUrgent ? '#FF4400' : '#D4952A'}`,
+      borderRadius: 14,
       padding: '8px 12px',
-      boxShadow: '0 8px 24px rgba(0,0,0,0.6)',
-      transition: 'border-color 0.3s ease',
+      boxShadow: `0 8px 24px rgba(0,0,0,0.7), inset 0 0 0 1px ${isUrgent ? 'rgba(255, 68, 0, 0.4)' : 'rgba(245, 200, 66, 0.4)'}, inset 0 1px 0 rgba(255, 248, 231, 0.15)`,
+      transition: 'border-color 0.3s ease, box-shadow 0.3s ease',
     }}>
       {/* SVG Ring */}
       <div style={{ position: 'relative', width: 76, height: 76 }}>

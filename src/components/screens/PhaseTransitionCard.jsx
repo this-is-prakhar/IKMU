@@ -78,11 +78,11 @@ export default function PhaseTransitionCard() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.4, type: 'spring', stiffness: 200, damping: 20 }}
           style={{
-            background: 'linear-gradient(160deg, rgba(22, 14, 8, 0.95), rgba(12, 8, 5, 0.98))',
-            border: '2px solid rgba(245, 200, 66, 0.4)',
+            background: 'linear-gradient(165deg, rgba(28, 18, 12, 0.96) 0%, rgba(18, 11, 7, 0.98) 100%)',
+            border: '2px solid #D4952A',
             borderRadius: 14,
             padding: '18px 36px',
-            boxShadow: '0 12px 40px rgba(0,0,0,0.7)',
+            boxShadow: '0 12px 40px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(245, 200, 66, 0.4), inset 0 1px 0 rgba(255,248,231,0.15)',
             textAlign: 'center',
             maxWidth: 'min(85vw, 600px)',
           }}

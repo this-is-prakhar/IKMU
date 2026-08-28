@@ -16,11 +16,11 @@ export default function PhaseBar() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',
-      background: 'linear-gradient(180deg, rgba(24, 16, 10, 0.95), rgba(14, 9, 6, 0.98))',
-      border: '1.5px solid rgba(245, 200, 66, 0.35)',
-      borderRadius: 10,
+      background: 'linear-gradient(165deg, rgba(28, 18, 12, 0.96) 0%, rgba(18, 11, 7, 0.98) 100%)',
+      border: '2px solid #D4952A',
+      borderRadius: 14,
       padding: '0 20px',
-      boxShadow: '0 4px 16px rgba(0,0,0,0.6)',
+      boxShadow: '0 4px 16px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(245, 200, 66, 0.4), inset 0 1px 0 rgba(255, 248, 231, 0.15)',
     }}>
       {/* Question counter */}
       <div style={{

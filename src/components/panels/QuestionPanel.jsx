@@ -2,31 +2,20 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../../store/gameStore.js';
 
 export default function QuestionPanel({ onAnswer }) {
-  const questions             = useGameStore((s) => s.questions);
-  const idx                   = useGameStore((s) => s.currentQuestionIndex);
-  const gamePhase             = useGameStore((s) => s.gamePhase);
-  const playerAnswers         = useGameStore((s) => s.playerAnswers);
-  const activeAnsweringPlayer = useGameStore((s) => s.activeAnsweringPlayer);
-  const setActivePlayer       = useGameStore((s) => s.setActiveAnsweringPlayer);
-  const buzzLock              = useGameStore((s) => s.buzzLock);
-  const players               = useGameStore((s) => s.players);
-  const questionResults       = useGameStore((s) => s.questionResults);
+  const questions         = useGameStore((s) => s.questions);
+  const idx               = useGameStore((s) => s.currentQuestionIndex);
+  const gamePhase         = useGameStore((s) => s.gamePhase);
+  const playerAnswers     = useGameStore((s) => s.playerAnswers);
+  const buzzLock          = useGameStore((s) => s.buzzLock);
+  const buzzIn            = useGameStore((s) => s.buzzIn);
+  const players           = useGameStore((s) => s.players);
+  const questionResults   = useGameStore((s) => s.questionResults);
 
   const q = questions[idx];
   if (!q) return null;
 
   const isFFF       = q.ruleset.mode === 'fastest-finger';
   const isRevealing = gamePhase === 'answerReveal' || gamePhase === 'consequence';
-
-  function handleOption(opt) {
-    if (gamePhase !== 'question') return;
-    if (isFFF) {
-      if (buzzLock === null) return;
-      onAnswer(buzzLock, opt);
-    } else {
-      onAnswer(activeAnsweringPlayer, opt);
-    }
-  }
 
   return (
     <div style={{
@@ -35,20 +24,26 @@ export default function QuestionPanel({ onAnswer }) {
       height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      background: 'linear-gradient(160deg, rgba(22, 14, 8, 0.94), rgba(12, 8, 5, 0.96))',
-      border: '2px solid rgba(245, 200, 66, 0.35)',
+      background: 'linear-gradient(165deg, rgba(28, 18, 12, 0.96) 0%, rgba(18, 11, 7, 0.98) 100%)',
+      border: '2px solid #D4952A',
       borderRadius: 14,
-      boxShadow: '0 8px 32px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,248,231,0.1)',
-      padding: '16px 18px',
-      gap: 10,
+      boxShadow: '0 8px 32px rgba(0,0,0,0.7), inset 0 0 0 1px rgba(245, 200, 66, 0.4), inset 0 1px 0 rgba(255, 248, 231, 0.15)',
+      padding: '14px 16px',
+      gap: 8,
       overflow: 'hidden',
     }}>
-      {/* Title & Phase */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      {/* Question Header */}
+      <div style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        borderBottom: '1px solid rgba(245, 200, 66, 0.25)',
+        paddingBottom: 6,
+      }}>
         <div style={{
           fontFamily: 'Cinzel, serif',
           fontWeight: 700,
-          fontSize: 'clamp(0.7rem, 1.2vw, 0.9rem)',
+          fontSize: 'clamp(0.75rem, 1.2vw, 0.92rem)',
           color: '#F5C842',
           letterSpacing: 1,
           textTransform: 'uppercase',
@@ -58,10 +53,11 @@ export default function QuestionPanel({ onAnswer }) {
         </div>
         <div style={{
           fontFamily: 'Cinzel, serif',
-          fontSize: '0.65rem',
-          color: 'rgba(245,237,208,0.5)',
+          fontSize: '0.68rem',
+          fontWeight: 600,
+          color: 'rgba(245, 237, 208, 0.6)',
         }}>
-          Q{q.id}
+          Q{q.id} of {questions.length}
         </div>
       </div>
 
@@ -76,10 +72,10 @@ export default function QuestionPanel({ onAnswer }) {
             style={{
               fontFamily: 'Crimson Text, serif',
               fontStyle: 'italic',
-              fontSize: 'clamp(0.8rem, 1.3vw, 0.98rem)',
+              fontSize: 'clamp(0.82rem, 1.25vw, 0.98rem)',
               color: '#FFF8E7',
-              lineHeight: 1.45,
-              maxHeight: '35%',
+              lineHeight: 1.4,
+              maxHeight: '30%',
               overflowY: 'auto',
             }}
           >
@@ -93,11 +89,15 @@ export default function QuestionPanel({ onAnswer }) {
             exit={{ opacity: 0 }}
             style={{
               fontFamily: 'Crimson Text, serif',
-              fontSize: 'clamp(0.75rem, 1.2vw, 0.92rem)',
+              fontSize: 'clamp(0.78rem, 1.2vw, 0.94rem)',
               color: '#FFF8E7',
               lineHeight: 1.4,
-              maxHeight: '35%',
+              maxHeight: '34%',
               overflowY: 'auto',
+              background: 'rgba(0,0,0,0.3)',
+              padding: '6px 10px',
+              borderRadius: 8,
+              border: '1px solid rgba(245,200,66,0.2)',
             }}
           >
             <span style={{ color: '#32CD32', fontWeight: 700 }}>
@@ -113,128 +113,276 @@ export default function QuestionPanel({ onAnswer }) {
         )}
       </AnimatePresence>
 
-      <div style={{ height: 1, background: 'rgba(245,200,66,0.3)', margin: '2px 0' }} />
+      {/* Option Descriptions A & B */}
+      <div style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 4,
+        background: 'rgba(0,0,0,0.25)',
+        padding: '6px 8px',
+        borderRadius: 8,
+        border: '1px solid rgba(245,200,66,0.15)',
+        fontSize: 'clamp(0.72rem, 1.1vw, 0.85rem)',
+        fontFamily: 'Crimson Text, serif',
+        color: 'rgba(255,248,231,0.9)',
+        lineHeight: 1.3,
+      }}>
+        <div style={{ color: isRevealing && q.correctOption === 'A' ? '#32CD32' : '#FFF8E7' }}>
+          <strong style={{ color: '#F5C842', fontFamily: 'Cinzel, serif' }}>A.</strong> {q.optionA}
+        </div>
+        <div style={{ color: isRevealing && q.correctOption === 'B' ? '#32CD32' : '#FFF8E7' }}>
+          <strong style={{ color: '#F5C842', fontFamily: 'Cinzel, serif' }}>B.</strong> {q.optionB}
+        </div>
+      </div>
 
-      {/* Player Selection Bar (Standard mode) */}
+      {/* Answer Controls: Q1-20 Individual Mode (All 3 Players Answer) */}
       {!isRevealing && !isFFF && (
-        <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-          <span style={{ fontSize: '0.65rem', fontFamily: 'Cinzel, serif', color: '#D4952A' }}>
-            Selecting for:
-          </span>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 6,
+          flex: 1,
+          justifyContent: 'center',
+        }}>
+          <div style={{
+            fontFamily: 'Cinzel, serif',
+            fontSize: '0.62rem',
+            color: '#D4952A',
+            letterSpacing: 1,
+            textTransform: 'uppercase',
+            textAlign: 'center',
+          }}>
+            All 3 Players Choose A or B:
+          </div>
+
           {players.map((p, i) => {
-            const hasAnswered = playerAnswers[i] !== null;
-            const isCurrent = activeAnsweringPlayer === i;
+            const ans = playerAnswers[i];
             return (
-              <button
+              <div
                 key={p.id}
-                onClick={() => setActivePlayer(i)}
                 style={{
-                  flex: 1,
-                  background: isCurrent
-                    ? 'linear-gradient(135deg, rgba(245,200,66,0.3), rgba(200,100,10,0.3))'
-                    : 'rgba(255,255,255,0.06)',
-                  border: `1.5px solid ${isCurrent ? '#F5C842' : 'rgba(255,255,255,0.15)'}`,
-                  borderRadius: 6,
-                  padding: '3px 6px',
-                  fontFamily: 'Cinzel, serif',
-                  fontSize: '0.65rem',
-                  fontWeight: 700,
-                  color: isCurrent ? '#F5C842' : '#FFF8E7',
-                  cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: 4,
+                  justifyContent: 'space-between',
+                  background: ans !== null
+                    ? 'rgba(50, 205, 50, 0.1)'
+                    : 'rgba(255, 255, 255, 0.04)',
+                  border: `1.5px solid ${ans !== null ? 'rgba(50, 205, 50, 0.4)' : 'rgba(245, 200, 66, 0.25)'}`,
+                  borderRadius: 8,
+                  padding: '4px 8px',
+                  gap: 8,
                 }}
               >
-                <span>{p.name.split(' ')[0]}</span>
-                {hasAnswered && <span style={{ color: '#32CD32' }}>✓ ({playerAnswers[i]})</span>}
-              </button>
+                {/* Player Name & Avatar */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, minWidth: 0, flex: 1 }}>
+                  <img
+                    src={p.pawnImage}
+                    alt={p.name}
+                    style={{ width: 20, height: 24, objectFit: 'contain', flexShrink: 0 }}
+                  />
+                  <span style={{
+                    fontFamily: 'Cinzel, serif',
+                    fontWeight: 700,
+                    fontSize: 'clamp(0.65rem, 1.1vw, 0.82rem)',
+                    color: ans !== null ? '#F5C842' : '#FFF8E7',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                  }}>
+                    {p.name.split(' ')[0]}
+                  </span>
+                  {ans && (
+                    <span style={{
+                      fontSize: '0.62rem',
+                      fontFamily: 'Cinzel, serif',
+                      fontWeight: 700,
+                      color: '#32CD32',
+                    }}>
+                      [Chose {ans}]
+                    </span>
+                  )}
+                </div>
+
+                {/* A / B Button Choices */}
+                <div style={{ display: 'flex', gap: 6 }}>
+                  <button
+                    onClick={() => onAnswer(i, 'A')}
+                    style={{
+                      padding: '4px 14px',
+                      borderRadius: 6,
+                      border: `1.5px solid ${ans === 'A' ? '#32CD32' : '#D4952A'}`,
+                      background: ans === 'A'
+                        ? 'linear-gradient(135deg, #1E7B6E, #2FA090)'
+                        : 'rgba(245, 200, 66, 0.1)',
+                      color: '#FFF8E7',
+                      fontFamily: 'Cinzel, serif',
+                      fontWeight: 700,
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                      boxShadow: ans === 'A' ? '0 0 8px rgba(50,205,50,0.5)' : 'none',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    A
+                  </button>
+                  <button
+                    onClick={() => onAnswer(i, 'B')}
+                    style={{
+                      padding: '4px 14px',
+                      borderRadius: 6,
+                      border: `1.5px solid ${ans === 'B' ? '#32CD32' : '#D4952A'}`,
+                      background: ans === 'B'
+                        ? 'linear-gradient(135deg, #1E7B6E, #2FA090)'
+                        : 'rgba(245, 200, 66, 0.1)',
+                      color: '#FFF8E7',
+                      fontFamily: 'Cinzel, serif',
+                      fontWeight: 700,
+                      fontSize: '0.8rem',
+                      cursor: 'pointer',
+                      boxShadow: ans === 'B' ? '0 0 8px rgba(50,205,50,0.5)' : 'none',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    B
+                  </button>
+                </div>
+              </div>
             );
           })}
         </div>
       )}
 
-      {/* FFF Mode Buzz Status */}
+      {/* Answer Controls: Q21-25 Fastest Finger First Mode */}
       {!isRevealing && isFFF && (
         <div style={{
-          fontFamily: 'Cinzel, serif',
-          fontSize: '0.7rem',
-          color: buzzLock !== null ? '#F5C842' : '#FF4400',
-          textAlign: 'center',
-          fontWeight: 700,
-          letterSpacing: 1,
-          background: 'rgba(0,0,0,0.3)',
-          padding: '4px 8px',
-          borderRadius: 6,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 8,
+          flex: 1,
+          justifyContent: 'center',
         }}>
-          {buzzLock === null
-            ? '⚡ FASTEST FINGER FIRST — Press Q / W / E to Buzz In!'
-            : `🔔 ${players[buzzLock]?.name} buzzed in!`
-          }
+          {buzzLock === null ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, alignItems: 'center' }}>
+              <div style={{
+                fontFamily: 'Cinzel, serif',
+                fontSize: '0.72rem',
+                color: '#FF4400',
+                fontWeight: 700,
+                letterSpacing: 1.5,
+                textTransform: 'uppercase',
+              }}>
+                ⚡ FIRST TO BUZZ IN GETS TO ANSWER:
+              </div>
+              <div style={{ display: 'flex', gap: 8, width: '100%' }}>
+                {players.map((p, i) => (
+                  <button
+                    key={p.id}
+                    onClick={() => buzzIn(i)}
+                    style={{
+                      flex: 1,
+                      padding: '10px 6px',
+                      borderRadius: 8,
+                      border: '2px solid #FF4400',
+                      background: 'linear-gradient(135deg, rgba(200,50,10,0.3), rgba(245,200,66,0.15))',
+                      color: '#FFF8E7',
+                      fontFamily: 'Cinzel, serif',
+                      fontWeight: 700,
+                      fontSize: '0.75rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 4,
+                      boxShadow: '0 4px 12px rgba(255,68,0,0.3)',
+                    }}
+                  >
+                    <span style={{ fontSize: '0.95rem' }}>🔔 BUZZ</span>
+                    <span>{p.name.split(' ')[0]}</span>
+                    <span style={{ fontSize: '0.65rem', color: '#F5C842' }}>[Key {['Q', 'W', 'E'][i]}]</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8, alignItems: 'center' }}>
+              <div style={{
+                fontFamily: 'Cinzel, serif',
+                fontSize: '0.78rem',
+                color: '#F5C842',
+                fontWeight: 700,
+                letterSpacing: 1,
+              }}>
+                🔔 {players[buzzLock]?.name} Buzzed In! Choose:
+              </div>
+              <div style={{ display: 'flex', gap: 12, width: '100%' }}>
+                <button
+                  onClick={() => onAnswer(buzzLock, 'A')}
+                  style={{
+                    flex: 1,
+                    padding: '10px 16px',
+                    borderRadius: 8,
+                    border: '2px solid #D4952A',
+                    background: 'linear-gradient(135deg, #C8640A, #D4952A)',
+                    color: '#FFF8E7',
+                    fontFamily: 'Cinzel, serif',
+                    fontWeight: 700,
+                    fontSize: '1rem',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 16px rgba(245,200,66,0.3)',
+                  }}
+                >
+                  Option A
+                </button>
+                <button
+                  onClick={() => onAnswer(buzzLock, 'B')}
+                  style={{
+                    flex: 1,
+                    padding: '10px 16px',
+                    borderRadius: 8,
+                    border: '2px solid #D4952A',
+                    background: 'linear-gradient(135deg, #C8640A, #D4952A)',
+                    color: '#FFF8E7',
+                    fontFamily: 'Cinzel, serif',
+                    fontWeight: 700,
+                    fontSize: '1rem',
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 16px rgba(245,200,66,0.3)',
+                  }}
+                >
+                  Option B
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-      {/* Option Buttons A / B */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, justifyContent: 'center' }}>
-        {(['A', 'B']).map((opt) => {
-          const optText = opt === 'A' ? q.optionA : q.optionB;
-          const isCorrect = q.correctOption === opt;
-          let btnStyle = {
-            width: '100%',
-            padding: '8px 12px',
-            borderRadius: 8,
-            border: '1.5px solid rgba(245,200,66,0.3)',
-            background: 'rgba(255,248,231,0.06)',
-            color: '#FFF8E7',
-            fontFamily: 'Crimson Text, serif',
-            fontSize: 'clamp(0.78rem, 1.2vw, 0.92rem)',
-            lineHeight: 1.35,
-            cursor: 'pointer',
-            textAlign: 'left',
-            transition: 'all 0.15s ease',
-          };
-
-          if (isRevealing) {
-            if (isCorrect) {
-              btnStyle.border = '2px solid #32CD32';
-              btnStyle.background = 'rgba(50,205,50,0.2)';
-            }
-          }
-
-          const canClick = !isRevealing && (!isFFF || buzzLock !== null);
-
-          return (
-            <button
-              key={opt}
-              style={btnStyle}
-              disabled={!canClick}
-              onClick={() => handleOption(opt)}
-            >
-              <span style={{ fontFamily: 'Cinzel, serif', fontWeight: 700, color: '#F5C842', marginRight: 6 }}>
-                {opt}.
-              </span>
-              {optText}
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Results breakdown per player during reveal */}
+      {/* Results Breakdown during Reveal */}
       {isRevealing && (
         <div style={{
           display: 'flex',
           gap: 6,
           justifyContent: 'space-around',
-          background: 'rgba(0,0,0,0.3)',
-          padding: '6px 8px',
-          borderRadius: 6,
-          fontSize: '0.68rem',
+          background: 'rgba(0,0,0,0.4)',
+          padding: '8px 10px',
+          borderRadius: 8,
+          border: '1px solid rgba(245,200,66,0.25)',
+          fontSize: '0.72rem',
           fontFamily: 'Cinzel, serif',
         }}>
           {questionResults.map((r) => (
-            <div key={r.playerIdx} style={{ color: r.isCorrect ? '#32CD32' : '#FF4444' }}>
-              {players[r.playerIdx]?.name.split(' ')[0]}: {r.answer || 'No Ans'} ({r.delta > 0 ? `+${r.delta}` : r.delta})
+            <div key={r.playerIdx} style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              color: r.isCorrect ? '#32CD32' : '#FF4444',
+            }}>
+              <span style={{ fontWeight: 700, color: '#FFF8E7' }}>
+                {players[r.playerIdx]?.name.split(' ')[0]}
+              </span>
+              <span>
+                {r.answer ? `Chose ${r.answer}` : 'No Answer'} ({r.delta > 0 ? `+${r.delta}` : r.delta})
+              </span>
             </div>
           ))}
         </div>
