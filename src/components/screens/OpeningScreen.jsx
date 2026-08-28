@@ -19,7 +19,7 @@ export default function OpeningScreen() {
         style={{
           position: 'absolute', inset: 0,
           backgroundImage: 'url(/assets/game_start.png)',
-          backgroundSize: '120% auto',
+          backgroundSize: 'cover',
           backgroundPosition: 'center center',
           backgroundRepeat: 'no-repeat',
           filter: 'brightness(0.55) saturate(1.2)',
@@ -46,14 +46,14 @@ export default function OpeningScreen() {
         alignItems: 'center',
         justifyContent: 'center',
         height: '100%',
-        gap: 32,
+        gap: 28,
       }}>
-        {/* Logo / title banner */}
+        {/* Title logo */}
         <motion.div
           initial={{ y: 60, opacity: 0, scale: 0.9 }}
           animate={{ y: 0, opacity: 1, scale: 1 }}
           transition={{ type: 'spring', stiffness: 200, damping: 22, delay: 0.2 }}
-          style={{ width: 'min(80vw, 600px)' }}
+          style={{ width: 'min(80vw, 560px)' }}
         >
           <img
             src="/assets/game_start.png"
@@ -63,7 +63,7 @@ export default function OpeningScreen() {
               height: 'auto',
               display: 'block',
               filter: 'drop-shadow(0 8px 32px rgba(0,0,0,0.8)) drop-shadow(0 0 48px rgba(245,200,66,0.3))',
-              borderRadius: 8,
+              borderRadius: 12,
             }}
           />
         </motion.div>
@@ -72,7 +72,7 @@ export default function OpeningScreen() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.6 }}
+          transition={{ delay: 0.5 }}
           style={{
             fontFamily: 'Cinzel, serif',
             fontSize: 'clamp(0.8rem, 1.8vw, 1.1rem)',
@@ -90,35 +90,18 @@ export default function OpeningScreen() {
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.9, duration: 0.5 }}
+          transition={{ delay: 0.7 }}
         >
-          <motion.button
-            className="btn-asset"
-            onClick={handleStart}
-            style={{ width: 'min(55vw, 340px)' }}
-            whileHover={{ scale: 0.96 }}
-            whileTap={{ scale: 0.92 }}
-            transition={{ type: 'spring', stiffness: 600, damping: 30 }}
-            title="Start Game"
-          >
-            <img
-              src="/assets/game_start_button.png"
-              alt="Start Game"
-              style={{
-                width: '100%',
-                height: 'auto',
-                display: 'block',
-                filter: 'drop-shadow(0 6px 24px rgba(245,200,66,0.5))',
-              }}
-            />
-          </motion.button>
+          <button className="start-game-btn" onClick={handleStart}>
+            START GAME
+          </button>
         </motion.div>
 
         {/* Players hint */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1.3 }}
+          transition={{ delay: 1.0 }}
           style={{
             fontFamily: 'Crimson Text, serif',
             fontStyle: 'italic',

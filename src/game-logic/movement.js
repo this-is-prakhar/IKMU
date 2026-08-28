@@ -2,44 +2,83 @@ import { BOARD_SIZE, SNAKES, LADDERS } from './boardConfig.js';
 
 /**
  * Apply a movement delta to a position.
- * Returns the final position after applying snakes/ladders.
+ * Returns movement details including starting tile, landing tile (after delta step),
+ * and final tile (after snake or ladder, if triggered).
  *
  * @param {number} currentPos  Current tile (0 = start)
  * @param {number} delta       Spaces to move (positive=forward, negative=backward)
- * @returns {{ newPos: number, snakeFrom?: number, snakeTo?: number, ladderFrom?: number, ladderTo?: number, win: boolean }}
+ * @returns {{
+ *   from: number,
+ *   landingTile: number,
+ *   finalTile: number,
+ *   newPos: number,
+ *   snakeFrom?: number,
+ *   snakeTo?: number,
+ *   ladderFrom?: number,
+ *   ladderTo?: number,
+ *   win: boolean
+ * }}
  */
 export function applyMovement(currentPos, delta) {
-  let raw = currentPos + delta;
+  let landingTile = currentPos + delta;
 
-  // Clamp: can't go below 1 (but if at 0 and moving back, stay at 0)
-  if (raw < 0) raw = 0;
+  // Clamp: can't go below 0
+  if (landingTile < 0) landingTile = 0;
 
-  // Can't exceed BOARD_SIZE (bounce back from finish)
-  if (raw > BOARD_SIZE) {
-    raw = BOARD_SIZE - (raw - BOARD_SIZE); // bounce
-    if (raw < 1) raw = 1;
+  // Bounce back if exceeding BOARD_SIZE
+  if (landingTile > BOARD_SIZE) {
+    landingTile = BOARD_SIZE - (landingTile - BOARD_SIZE);
+    if (landingTile < 1) landingTile = 1;
   }
 
-  // Win condition: exactly hit finish
-  if (raw >= BOARD_SIZE) {
-    return { newPos: BOARD_SIZE, win: true };
+  // Win condition: reached or exceeded finish
+  if (landingTile >= BOARD_SIZE) {
+    return {
+      from: currentPos,
+      landingTile: BOARD_SIZE,
+      finalTile: BOARD_SIZE,
+      newPos: BOARD_SIZE,
+      win: true,
+    };
   }
 
-  // Check snake
-  if (SNAKES[raw]) {
-    const snakeFrom = raw;
-    const snakeTo   = SNAKES[raw];
-    return { newPos: snakeTo, snakeFrom, snakeTo, win: false };
+  // Check ladder at landingTile
+  if (LADDERS[landingTile]) {
+    const ladderFrom = landingTile;
+    const ladderTo   = LADDERS[landingTile];
+    return {
+      from: currentPos,
+      landingTile,
+      finalTile: ladderTo,
+      newPos: ladderTo,
+      ladderFrom,
+      ladderTo,
+      win: ladderTo >= BOARD_SIZE,
+    };
   }
 
-  // Check ladder
-  if (LADDERS[raw]) {
-    const ladderFrom = raw;
-    const ladderTo   = LADDERS[raw];
-    return { newPos: ladderTo, ladderFrom, ladderTo, win: false };
+  // Check snake at landingTile
+  if (SNAKES[landingTile]) {
+    const snakeFrom = landingTile;
+    const snakeTo   = SNAKES[landingTile];
+    return {
+      from: currentPos,
+      landingTile,
+      finalTile: snakeTo,
+      newPos: snakeTo,
+      snakeFrom,
+      snakeTo,
+      win: false,
+    };
   }
 
-  return { newPos: raw, win: false };
+  return {
+    from: currentPos,
+    landingTile,
+    finalTile: landingTile,
+    newPos: landingTile,
+    win: landingTile >= BOARD_SIZE,
+  };
 }
 
 /**

@@ -1,25 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { motion, useAnimation } from 'framer-motion';
-import { TILE_POSITIONS, BOARD_PX, TILE_PX } from '../../game-logic/boardConfig.js';
+import { TILE_POSITIONS, BOARD_PX } from '../../game-logic/boardConfig.js';
 import { getMovementPath } from '../../game-logic/movement.js';
 
-const PAWN_SIZE = 44; // px width of pawn image on board
+const PAWN_SIZE = 44;
 
-/**
- * @param {{
- *   player: Object,
- *   boardRef: React.RefObject,
- *   isActive: boolean,
- *   onAnimationDone: () => void,
- *   pendingMovement: Object|null,
- *   shouldAnimate: boolean,
- * }} props
- */
 export default function Pawn({ player, boardRef, isActive, onAnimationDone, pendingMovement, shouldAnimate }) {
-  const controls   = useAnimation();
-  const animating  = useRef(false);
+  const controls  = useAnimation();
+  const animating = useRef(false);
 
-  // Convert tile position to % of board (for responsive positioning)
   function tileToPercent(tile) {
     const pos = TILE_POSITIONS[tile] ?? TILE_POSITIONS[0];
     return {
@@ -38,64 +27,58 @@ export default function Pawn({ player, boardRef, isActive, onAnimationDone, pend
     }
   }, [shouldAnimate, player.id]);
 
-  // Step-by-step movement animation
+  // 2-Phase movement animation
   useEffect(() => {
     if (!shouldAnimate || !pendingMovement || animating.current) return;
 
-    const { newPos } = pendingMovement;
-    const fromPos    = player.position; // position before movement (the store already updated it, so we animate from prev)
-    // We animate: from (prevPosition = newPos - delta) to newPos
-    // But store has already applied the final position including snake/ladder.
-    // We animate intermediate steps then trigger snake/ladder separately.
     animating.current = true;
 
     (async () => {
       try {
-        // Calculate path from before-movement position
-        const prevPos  = pendingMovement.snakeFrom ?? pendingMovement.ladderFrom ?? newPos;
-        const rawTo    = pendingMovement.snakeFrom ?? pendingMovement.ladderFrom ?? newPos;
+        const { from, landingTile, ladderFrom, ladderTo, snakeFrom, snakeTo, win } = pendingMovement;
 
-        // Step through tiles one at a time
-        if (rawTo !== fromPos) {
-          const steps = getMovementPath(fromPos, rawTo);
+        // Phase 1: Step tile-by-tile from 'from' to 'landingTile'
+        if (landingTile !== from) {
+          const steps = getMovementPath(from, landingTile);
           for (const stepTile of steps) {
             const { left, top } = tileToPercent(stepTile);
             await controls.start({
               left, top,
-              transition: { duration: 0.12, ease: 'easeInOut' },
+              transition: { duration: 0.14, ease: 'easeInOut' },
             });
-            // Small bounce on each step
             await controls.start({
-              y: [-3, 0],
+              y: [-4, 0],
               transition: { duration: 0.08 },
             });
           }
         }
 
-        // Snake slide
-        if (pendingMovement.snakeFrom) {
-          await controls.start({ scale: 0.8, rotate: 15, transition: { duration: 0.2 } });
-          const snakeDest = tileToPercent(pendingMovement.snakeTo);
+        // Phase 2: Ladder climb from landingTile to ladderTo
+        if (ladderFrom && ladderTo) {
+          await new Promise((r) => setTimeout(r, 250));
+          await controls.start({ scale: 1.2, y: -10, transition: { duration: 0.2 } });
+          const dest = tileToPercent(ladderTo);
           await controls.start({
-            ...snakeDest,
-            scale: 1, rotate: 0,
-            transition: { duration: 0.7, ease: 'easeIn' },
-          });
-        }
-
-        // Ladder climb
-        if (pendingMovement.ladderFrom) {
-          await controls.start({ scale: 1.15, y: -8, transition: { duration: 0.15 } });
-          const ladderDest = tileToPercent(pendingMovement.ladderTo);
-          await controls.start({
-            ...ladderDest,
+            ...dest,
             scale: 1, y: 0,
-            transition: { duration: 0.5, ease: 'easeOut' },
+            transition: { duration: 0.65, ease: 'easeOut' },
           });
         }
 
-        // Win bounce
-        if (pendingMovement.win) {
+        // Phase 2 (alt): Snake slither from landingTile to snakeTo
+        if (snakeFrom && snakeTo) {
+          await new Promise((r) => setTimeout(r, 250));
+          await controls.start({ scale: 0.8, rotate: 18, transition: { duration: 0.2 } });
+          const dest = tileToPercent(snakeTo);
+          await controls.start({
+            ...dest,
+            scale: 1, rotate: 0,
+            transition: { duration: 0.75, ease: 'easeIn' },
+          });
+        }
+
+        // Phase 3: Win celebration bounce
+        if (win) {
           await controls.start({
             scale: [1, 1.4, 1, 1.3, 1],
             rotate: [0, -10, 10, -5, 0],
@@ -139,7 +122,6 @@ export default function Pawn({ player, boardRef, isActive, onAnimationDone, pend
           WebkitUserDrag: 'none',
         }}
       />
-      {/* Name tag */}
       <div style={{
         position: 'absolute',
         bottom: -16,

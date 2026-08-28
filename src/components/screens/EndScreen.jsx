@@ -56,7 +56,7 @@ export default function EndScreen() {
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        gap: 'clamp(10px, 2vh, 24px)',
+        gap: 'clamp(10px, 2.2vh, 24px)',
         padding: 24,
         overflow: 'hidden',
       }}
@@ -204,19 +204,12 @@ export default function EndScreen() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 1.3 }}
+        transition={{ delay: 1.2 }}
         style={{ position: 'relative', zIndex: 2 }}
       >
-        <motion.button
-          className="btn-asset"
-          onClick={handlePlayAgain}
-          style={{ width: 'min(45vw, 240px)' }}
-          whileHover={{ scale: 0.96 }}
-          whileTap={{ scale: 0.92 }}
-          transition={{ type: 'spring', stiffness: 600, damping: 30 }}
-        >
-          <img src="/assets/game_start_button.png" alt="Play Again" style={{ width: '100%', height: 'auto' }} />
-        </motion.button>
+        <button className="start-game-btn" onClick={handlePlayAgain}>
+          PLAY AGAIN
+        </button>
       </motion.div>
     </div>
   );

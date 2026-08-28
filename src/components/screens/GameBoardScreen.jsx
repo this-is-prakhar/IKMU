@@ -83,7 +83,6 @@ export default function GameBoardScreen() {
     if (activeMovement?.snakeFrom) sounds.snake();
     else if (activeMovement?.ladderFrom) sounds.ladder();
 
-    // Move to next player's animation if any
     setAnimatingPlayer(null);
     setActiveMovement(null);
     setTimeout(() => showConsequence(), 600);
@@ -124,18 +123,18 @@ export default function GameBoardScreen() {
       {/* Background artwork — clearly visible */}
       <div style={{
         position: 'absolute', inset: 0,
-        backgroundImage: 'url(/assets/game_start.png)',
+        backgroundImage: 'url(/assets/Game_Background.jpg), url(/assets/Game_Background.png), url(/assets/game_start.png)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        opacity: 0.42,
-        filter: 'brightness(0.7) saturate(1.2)',
+        opacity: 0.5,
+        filter: 'brightness(0.75) saturate(1.2)',
         pointerEvents: 'none',
       }} />
 
       {/* Radial vignette overlay for warmth */}
       <div style={{
         position: 'absolute', inset: 0,
-        background: 'radial-gradient(ellipse at center, transparent 40%, rgba(11,7,4,0.75) 100%)',
+        background: 'radial-gradient(ellipse at center, transparent 40%, rgba(11,7,4,0.7) 100%)',
         pointerEvents: 'none',
       }} />
 
