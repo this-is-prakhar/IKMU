@@ -15,20 +15,18 @@ import ConsequenceBanner   from '../ui/ConsequenceBanner.jsx';
 import ComicReactionBubble from '../ui/ComicReactionBubble.jsx';
 
 export default function GameBoardScreen() {
-  const players          = useGameStore((s) => s.players);
-  const questions        = useGameStore((s) => s.questions);
-  const currentQIdx      = useGameStore((s) => s.currentQuestionIndex);
-  const gamePhase        = useGameStore((s) => s.gamePhase);
-  const answerResult     = useGameStore((s) => s.answerResult);
-  const pendingMovement  = useGameStore((s) => s.pendingMovement);
-  const currentTurnIdx   = useGameStore((s) => s.currentTurnPlayerIndex);
-  const buzzLock         = useGameStore((s) => s.buzzLock);
-  const winner           = useGameStore((s) => s.winner);
-  const submitAnswer     = useGameStore((s) => s.submitAnswer);
-  const showConsequence  = useGameStore((s) => s.showConsequence);
-  const advanceQuestion  = useGameStore((s) => s.advanceQuestion);
-  const startTimer       = useGameStore((s) => s.startTimer);
-  const setScreen        = useGameStore((s) => s.setScreen);
+  const players             = useGameStore((s) => s.players);
+  const questions           = useGameStore((s) => s.questions);
+  const currentQIdx         = useGameStore((s) => s.currentQuestionIndex);
+  const gamePhase           = useGameStore((s) => s.gamePhase);
+  const questionResults     = useGameStore((s) => s.questionResults);
+  const pendingMovements    = useGameStore((s) => s.pendingMovements);
+  const winner              = useGameStore((s) => s.winner);
+  const submitPlayerAnswer  = useGameStore((s) => s.submitPlayerAnswer);
+  const showConsequence     = useGameStore((s) => s.showConsequence);
+  const advanceQuestion     = useGameStore((s) => s.advanceQuestion);
+  const startTimer          = useGameStore((s) => s.startTimer);
+  const setScreen           = useGameStore((s) => s.setScreen);
 
   const sounds = useSound();
 
@@ -38,90 +36,106 @@ export default function GameBoardScreen() {
 
   const boardRef = useRef(null);
 
-  const q          = questions[currentQIdx];
-  const isFFF      = q?.ruleset?.mode === 'fastest-finger';
-  const actingPlayer = buzzLock !== null ? buzzLock : currentTurnIdx;
+  const q = questions[currentQIdx];
 
   // Track which player is currently animating their pawn
   const [animatingPlayer, setAnimatingPlayer] = useState(null);
+  const [activeMovement, setActiveMovement]  = useState(null);
 
-  // Start timer when entering a new question (if needed)
+  // Start timer when entering a question phase
   useEffect(() => {
     if (gamePhase === 'question' && q?.ruleset?.timerSeconds > 0) {
-      const t = setTimeout(() => startTimer(), 600);
+      const t = setTimeout(() => startTimer(), 400);
       return () => clearTimeout(t);
     }
   }, [gamePhase, currentQIdx]);
 
-  // Play sounds on answer reveal
+  // Handle answer reveal & sequential pawn animation
   useEffect(() => {
     if (gamePhase === 'answerReveal') {
-      if (answerResult === 'correct') sounds.correct();
-      else if (answerResult === 'wrong') sounds.wrong();
+      const hasAnyCorrect = questionResults.some((r) => r.isCorrect);
+      if (hasAnyCorrect) sounds.correct();
+      else sounds.wrong();
 
-      // If there's movement, start pawn animation
-      if (pendingMovement) {
-        setAnimatingPlayer(actingPlayer);
+      if (pendingMovements && pendingMovements.length > 0) {
+        // Queue pawn animations for each player
+        let moveQueue = [...pendingMovements];
+        const runNextAnimation = () => {
+          if (moveQueue.length === 0) {
+            setAnimatingPlayer(null);
+            setActiveMovement(null);
+            setTimeout(() => showConsequence(), 600);
+            return;
+          }
+          const currentMove = moveQueue.shift();
+          setAnimatingPlayer(currentMove.playerIdx);
+          setActiveMovement(currentMove);
+        };
+        runNextAnimation();
       } else {
-        // No movement (skip) — go straight to consequence after short delay
         const t = setTimeout(() => showConsequence(), 2500);
         return () => clearTimeout(t);
       }
     }
   }, [gamePhase]);
 
-  // After pawn animation completes → show consequence
   const handlePawnAnimDone = useCallback(() => {
-    if (pendingMovement?.snakeFrom) sounds.snake();
-    else if (pendingMovement?.ladderFrom) sounds.ladder();
-    setAnimatingPlayer(null);
+    if (activeMovement?.snakeFrom) sounds.snake();
+    else if (activeMovement?.ladderFrom) sounds.ladder();
 
-    const t = setTimeout(() => showConsequence(), 500);
-    return () => clearTimeout(t);
-  }, [pendingMovement]);
+    // Move to next player's animation if any
+    setAnimatingPlayer(null);
+    setActiveMovement(null);
+    setTimeout(() => showConsequence(), 600);
+  }, [activeMovement]);
 
   // Auto-advance after consequence display
   useEffect(() => {
     if (gamePhase === 'consequence') {
-      // Check win condition
       if (winner) {
         const t = setTimeout(() => setScreen('endScreen'), 2200);
         return () => clearTimeout(t);
       }
-      const t = setTimeout(() => advanceQuestion(), 3200);
+      const t = setTimeout(() => advanceQuestion(), 3400);
       return () => clearTimeout(t);
     }
   }, [gamePhase, winner]);
 
-  // Determine reaction type for comic bubble
-  const reactionType = gamePhase === 'answerReveal' || gamePhase === 'pawnMoving'
-    ? (answerResult === 'correct' ? (pendingMovement?.ladderFrom ? 'ladder' : 'correct')
-       : answerResult === 'wrong'  ? (pendingMovement?.snakeFrom ? 'snake' : 'wrong')
-       : null)
+  // Comic reaction type
+  const hasLadder = pendingMovements.some((m) => m.ladderFrom);
+  const hasSnake  = pendingMovements.some((m) => m.snakeFrom);
+  const reactionType = gamePhase === 'answerReveal'
+    ? (hasLadder ? 'ladder' : hasSnake ? 'snake' : questionResults.some((r) => r.isCorrect) ? 'correct' : 'wrong')
     : null;
-
-  const showBubble = (gamePhase === 'answerReveal' || gamePhase === 'pawnMoving') && answerResult !== 'skip';
 
   return (
     <div
       className="screen"
       style={{
-        background: '#0D0906',
+        background: '#0B0704',
         display: 'grid',
         gridTemplateColumns: '1fr',
         gridTemplateRows: 'auto 1fr auto',
-        gap: 0,
+        gap: 6,
+        padding: 6,
         overflow: 'hidden',
       }}
     >
-      {/* Ambient background */}
+      {/* Background artwork — clearly visible */}
       <div style={{
         position: 'absolute', inset: 0,
         backgroundImage: 'url(/assets/game_start.png)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        opacity: 0.06,
-        filter: 'blur(8px) saturate(1.5)',
+        opacity: 0.42,
+        filter: 'brightness(0.7) saturate(1.2)',
+        pointerEvents: 'none',
+      }} />
+
+      {/* Radial vignette overlay for warmth */}
+      <div style={{
+        position: 'absolute', inset: 0,
+        background: 'radial-gradient(ellipse at center, transparent 40%, rgba(11,7,4,0.75) 100%)',
         pointerEvents: 'none',
       }} />
 
@@ -129,8 +143,7 @@ export default function GameBoardScreen() {
       <div style={{
         position: 'relative',
         zIndex: 10,
-        height: 'clamp(44px, 7vh, 64px)',
-        padding: '0 8px',
+        height: 'clamp(40px, 6vh, 56px)',
       }}>
         <PhaseBar />
       </div>
@@ -140,28 +153,19 @@ export default function GameBoardScreen() {
         position: 'relative',
         zIndex: 5,
         display: 'grid',
-        gridTemplateColumns: 'clamp(200px, 22vw, 280px) 1fr clamp(160px, 18vw, 220px)',
+        gridTemplateColumns: 'clamp(220px, 24vw, 300px) 1fr clamp(170px, 19vw, 240px)',
         gap: 8,
-        padding: '0 8px',
         overflow: 'hidden',
         minHeight: 0,
       }}>
         {/* LEFT — Question panel */}
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 6,
-          minHeight: 0,
-          overflow: 'hidden',
-        }}>
-          <div style={{ flex: 1, position: 'relative', minHeight: 0 }}>
-            <QuestionPanel
-              onAnswer={(opt) => {
-                sounds.click();
-                submitAnswer(opt);
-              }}
-            />
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+          <QuestionPanel
+            onAnswer={(playerIdx, opt) => {
+              sounds.click();
+              submitPlayerAnswer(playerIdx, opt);
+            }}
+          />
         </div>
 
         {/* CENTER — Board + pawns */}
@@ -175,7 +179,7 @@ export default function GameBoardScreen() {
           <div ref={boardRef} style={{
             position: 'relative',
             width: '100%',
-            maxWidth: 'min(100%, calc(100vh - 200px))',
+            maxWidth: 'min(100%, calc(100vh - 190px))',
             aspectRatio: '1 / 1',
           }}>
             <Board />
@@ -185,16 +189,16 @@ export default function GameBoardScreen() {
                 key={p.id}
                 player={p}
                 boardRef={boardRef}
-                isActive={i === actingPlayer && gamePhase === 'question'}
+                isActive={gamePhase === 'question'}
                 shouldAnimate={animatingPlayer === i && gamePhase === 'answerReveal'}
-                pendingMovement={animatingPlayer === i ? pendingMovement : null}
+                pendingMovement={animatingPlayer === i ? activeMovement : null}
                 onAnimationDone={handlePawnAnimDone}
               />
             ))}
           </div>
 
           {/* Comic reaction bubble */}
-          <ComicReactionBubble type={reactionType} visible={showBubble} />
+          <ComicReactionBubble type={reactionType} visible={gamePhase === 'answerReveal'} />
         </div>
 
         {/* RIGHT — Timer + Leaderboard */}
@@ -206,7 +210,7 @@ export default function GameBoardScreen() {
           overflow: 'hidden',
         }}>
           {/* Timer */}
-          <div style={{ flexShrink: 0, display: 'flex', justifyContent: 'center' }}>
+          <div style={{ flexShrink: 0 }}>
             <TimerPanel />
           </div>
 
@@ -221,9 +225,7 @@ export default function GameBoardScreen() {
       <div style={{
         position: 'relative',
         zIndex: 10,
-        height: 'clamp(80px, 12vh, 110px)',
-        padding: '4px 8px',
-        background: 'linear-gradient(180deg, transparent, rgba(13,9,6,0.6))',
+        height: 'clamp(75px, 11vh, 100px)',
       }}>
         <PlayerCards />
       </div>

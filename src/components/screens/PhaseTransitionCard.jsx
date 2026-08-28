@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useGameStore } from '../../store/gameStore.js';
-import { useSound } from '../../hooks/useSound.js';
 
 const PHASE_COLORS = {
   1: { bg: '#8B2635', accent: '#FF6644', icon: '🔥' },
@@ -12,17 +11,15 @@ const PHASE_COLORS = {
 };
 
 export default function PhaseTransitionCard() {
-  const phases          = useGameStore((s) => s.phases);
-  const pendingPhaseId  = useGameStore((s) => s.pendingPhaseId);
-  const phaseTransDone  = useGameStore((s) => s.phaseTransitionDone);
-  const sounds          = useSound();
+  const phases         = useGameStore((s) => s.phases);
+  const pendingPhaseId = useGameStore((s) => s.pendingPhaseId);
+  const phaseTransDone = useGameStore((s) => s.phaseTransitionDone);
 
   const phase  = phases.find((p) => p.id === pendingPhaseId) ?? phases[0];
   const colors = PHASE_COLORS[phase?.id] ?? PHASE_COLORS[1];
 
-  // Auto-advance after 3 seconds
   useEffect(() => {
-    const t = setTimeout(() => phaseTransDone(), 3400);
+    const t = setTimeout(() => phaseTransDone(), 3200);
     return () => clearTimeout(t);
   }, [pendingPhaseId]);
 
@@ -34,20 +31,18 @@ export default function PhaseTransitionCard() {
       onClick={phaseTransDone}
       style={{ cursor: 'pointer' }}
     >
-      {/* Radial glow background */}
       <div style={{
         position: 'absolute', inset: 0,
         background: `radial-gradient(ellipse at center, ${colors.bg}cc 0%, #0D0906 70%)`,
       }} />
 
-      {/* Letterhead frame */}
       <div style={{
         position: 'relative',
         zIndex: 2,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: 24,
+        gap: 20,
         padding: 32,
       }}>
         {/* Phase icon */}
@@ -55,79 +50,63 @@ export default function PhaseTransitionCard() {
           initial={{ scale: 0, rotate: -180 }}
           animate={{ scale: 1, rotate: 0 }}
           transition={{ type: 'spring', stiffness: 280, damping: 20, delay: 0.1 }}
-          style={{ fontSize: 'clamp(3rem, 8vw, 5rem)', filter: 'drop-shadow(0 0 24px rgba(0,0,0,0.8))' }}
+          style={{ fontSize: 'clamp(3rem, 7vw, 4.5rem)', filter: 'drop-shadow(0 0 24px rgba(0,0,0,0.8))' }}
         >
           {colors.icon}
         </motion.div>
 
-        {/* "Phase" label */}
+        {/* Phase number */}
         <motion.div
-          initial={{ opacity: 0, y: -20 }}
+          initial={{ opacity: 0, y: -15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
           style={{
             fontFamily: 'Cinzel, serif',
-            fontWeight: 400,
-            fontSize: 'clamp(0.9rem, 2vw, 1.3rem)',
+            fontWeight: 700,
+            fontSize: 'clamp(0.9rem, 2vw, 1.2rem)',
             color: '#D4952A',
             letterSpacing: '0.4em',
             textTransform: 'uppercase',
           }}
         >
-          Phase {romanNumerals[phase?.id] ?? ''}
+          PHASE {romanNumerals[phase?.id] ?? ''}
         </motion.div>
 
-        {/* Phase name */}
+        {/* Phase name banner */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.85 }}
+          initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.4, type: 'spring', stiffness: 200, damping: 20 }}
-          style={{ position: 'relative' }}
+          style={{
+            background: 'linear-gradient(160deg, rgba(22, 14, 8, 0.95), rgba(12, 8, 5, 0.98))',
+            border: '2px solid rgba(245, 200, 66, 0.4)',
+            borderRadius: 14,
+            padding: '18px 36px',
+            boxShadow: '0 12px 40px rgba(0,0,0,0.7)',
+            textAlign: 'center',
+            maxWidth: 'min(85vw, 600px)',
+          }}
         >
-          {/* Letterhead banner */}
-          <div style={{ position: 'relative', textAlign: 'center' }}>
-            <img
-              src="/assets/Letterhead.png"
-              alt=""
-              style={{
-                width: 'min(80vw, 560px)',
-                height: 'auto',
-                display: 'block',
-                filter: 'drop-shadow(0 8px 24px rgba(0,0,0,0.8))',
-              }}
-            />
-            {/* Phase name text overlaid on Letterhead */}
-            <div style={{
-              position: 'absolute',
-              inset: 0,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '0 15%',
-            }}>
-              <div style={{
-                fontFamily: 'Cinzel Decorative, serif',
-                fontWeight: 700,
-                fontSize: 'clamp(0.9rem, 2.5vw, 1.6rem)',
-                color: '#F5C842',
-                textShadow: '0 2px 12px rgba(0,0,0,0.8)',
-                textAlign: 'center',
-                lineHeight: 1.2,
-              }}>
-                {phase?.name}
-              </div>
-            </div>
+          <div style={{
+            fontFamily: 'Cinzel Decorative, serif',
+            fontWeight: 700,
+            fontSize: 'clamp(1rem, 2.8vw, 1.8rem)',
+            color: '#F5C842',
+            textShadow: '0 2px 12px rgba(0,0,0,0.8)',
+            lineHeight: 1.25,
+          }}>
+            {phase?.name}
           </div>
         </motion.div>
 
         {/* Question range */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
           style={{
             fontFamily: 'Cinzel, serif',
-            fontSize: 'clamp(0.75rem, 1.5vw, 1rem)',
+            fontSize: 'clamp(0.8rem, 1.5vw, 1rem)',
             color: colors.accent,
             letterSpacing: '0.2em',
           }}
@@ -135,7 +114,6 @@ export default function PhaseTransitionCard() {
           Questions {phase?.questionRange?.[0]} – {phase?.questionRange?.[1]}
         </motion.div>
 
-        {/* Gold divider */}
         <motion.div
           initial={{ scaleX: 0 }}
           animate={{ scaleX: 1 }}
@@ -147,11 +125,10 @@ export default function PhaseTransitionCard() {
           }}
         />
 
-        {/* Click to continue hint */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: [0, 1, 0, 1] }}
-          transition={{ delay: 1.5, duration: 1, repeat: Infinity }}
+          transition={{ delay: 1.2, duration: 1, repeat: Infinity }}
           style={{
             fontFamily: 'Crimson Text, serif',
             fontStyle: 'italic',

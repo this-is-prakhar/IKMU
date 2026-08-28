@@ -1,74 +1,76 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGameStore } from '../../store/gameStore.js';
-import { sortLeaderboard } from '../../game-logic/scoring.js';
-import { accuracy } from '../../game-logic/scoring.js';
+import { sortLeaderboard, accuracy } from '../../game-logic/scoring.js';
 
 const MEDALS = ['🥇', '🥈', '🥉'];
 
-/**
- * Leaderboard panel framed in winner.png (gold crest).
- * Animates re-sort when positions change.
- */
 export default function LeaderboardPanel() {
-  const players      = useGameStore((s) => s.players);
+  const players       = useGameStore((s) => s.players);
   const leaderChanged = useGameStore((s) => s.leaderChanged);
-  const sorted       = sortLeaderboard(players);
+  const sorted        = sortLeaderboard(players);
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      {/* Frame */}
-      <img
-        src="/assets/winner.png"
-        alt=""
-        style={{
-          position: 'absolute', inset: 0,
-          width: '100%', height: '100%',
-          objectFit: 'fill',
-          pointerEvents: 'none',
-        }}
-      />
-
-      {/* Content */}
+    <div style={{
+      position: 'relative',
+      width: '100%',
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column',
+      background: 'linear-gradient(160deg, rgba(22, 14, 8, 0.94), rgba(12, 8, 5, 0.96))',
+      border: '2px solid rgba(245, 200, 66, 0.35)',
+      borderRadius: 14,
+      boxShadow: '0 8px 32px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,248,231,0.1)',
+      padding: '12px 14px',
+      gap: 8,
+      overflow: 'hidden',
+    }}>
+      {/* Header */}
       <div style={{
-        position: 'relative',
-        zIndex: 1,
-        height: '100%',
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
-        padding: '22% 8% 8%',
-        gap: 6,
+        justifyContent: 'space-between',
+        borderBottom: '1px solid rgba(245,200,66,0.25)',
+        paddingBottom: 6,
       }}>
+        <div style={{
+          fontFamily: 'Cinzel, serif',
+          fontWeight: 700,
+          fontSize: 'clamp(0.72rem, 1.2vw, 0.88rem)',
+          color: '#F5C842',
+          letterSpacing: 1,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+        }}>
+          <span>🏆</span> LEADERBOARD
+        </div>
+
         {/* NEW LEADER flash */}
         <AnimatePresence>
           {leaderChanged && (
-            <motion.div
-              key="new-leader"
-              initial={{ scale: 0, rotate: -8 }}
-              animate={{ scale: 1, rotate: 0 }}
-              exit={{ scale: 0, opacity: 0 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 20 }}
+            <motion.span
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0 }}
               style={{
-                position: 'absolute',
-                top: '12%',
                 background: 'linear-gradient(135deg, #F5C842, #E86F1F)',
                 color: '#1A0D06',
                 fontFamily: 'Cinzel, serif',
                 fontWeight: 900,
-                fontSize: '0.7rem',
-                padding: '4px 10px',
-                borderRadius: 20,
+                fontSize: '0.55rem',
+                padding: '2px 6px',
+                borderRadius: 10,
                 letterSpacing: 1,
-                boxShadow: '0 4px 16px rgba(245,200,66,0.7)',
-                zIndex: 10,
               }}
             >
-              ⭐ NEW LEADER!
-            </motion.div>
+              NEW LEADER!
+            </motion.span>
           )}
         </AnimatePresence>
+      </div>
 
-        {/* Rankings */}
+      {/* Rankings */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6, flex: 1, justifyContent: 'center' }}>
         {sorted.map((player, rank) => (
           <motion.div
             key={player.id}
@@ -77,14 +79,14 @@ export default function LeaderboardPanel() {
             style={{
               display: 'flex',
               alignItems: 'center',
-              gap: 6,
+              gap: 8,
               width: '100%',
               background: rank === 0
-                ? 'linear-gradient(90deg, rgba(245,200,66,0.2), transparent)'
+                ? 'linear-gradient(90deg, rgba(245,200,66,0.18), rgba(200,100,10,0.08))'
                 : 'rgba(255,255,255,0.04)',
-              borderRadius: 6,
-              padding: '4px 6px',
-              border: rank === 0 ? '1px solid rgba(245,200,66,0.4)' : '1px solid rgba(255,255,255,0.06)',
+              borderRadius: 8,
+              padding: '6px 8px',
+              border: rank === 0 ? '1px solid rgba(245,200,66,0.45)' : '1px solid rgba(255,255,255,0.08)',
             }}
           >
             {/* Medal */}
@@ -102,7 +104,7 @@ export default function LeaderboardPanel() {
               <div style={{
                 fontFamily: 'Cinzel, serif',
                 fontWeight: 700,
-                fontSize: 'clamp(0.55rem, 1vw, 0.72rem)',
+                fontSize: 'clamp(0.6rem, 1vw, 0.78rem)',
                 color: rank === 0 ? '#F5C842' : '#FFF8E7',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
@@ -111,8 +113,8 @@ export default function LeaderboardPanel() {
                 {player.name}
               </div>
               <div style={{
-                fontSize: '0.55rem',
-                color: 'rgba(245,237,208,0.6)',
+                fontSize: '0.58rem',
+                color: 'rgba(245,237,208,0.65)',
                 fontFamily: 'Crimson Text, serif',
               }}>
                 Tile {player.position} · {player.score}pts · {accuracy(player)}

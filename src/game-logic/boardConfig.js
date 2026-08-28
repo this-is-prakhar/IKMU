@@ -45,7 +45,7 @@ export const SNAKES = {
 
 // ── Ladders: bottom tile → top tile (you climb UP) ──────────────────────────
 export const LADDERS = {
-   5: 27,
+   9: 27,
   14: 43,
   23: 55,
   38: 64,

@@ -31,17 +31,19 @@ const initialState = {
   phases:    questionsData.phases,
   pregame:   questionsData.pregameSituation,
 
-  // Turn state
-  currentTurnPlayerIndex: 0,
-  buzzLock: null,           // playerIndex who buzzed in (FFF mode), or null
+  // Per-question player answers: { 0: 'A'|'B'|null, 1: 'A'|'B'|null, 2: 'A'|'B'|null }
+  playerAnswers: { 0: null, 1: null, 2: null },
+  activeAnsweringPlayer: 0, // In standard mode, which player is currently selecting
 
-  // Game-phase machine (within 'playing' screen)
-  gamePhase: 'question',   // 'question'|'answerReveal'|'pawnMoving'|'consequence'|'phaseTransition'
+  // Buzz-in state (FFF mode)
+  buzzLock: null,           // playerIndex who buzzed in, or null
 
-  // Answer state
-  selectedAnswer: null,     // 'A'|'B'
-  answerResult: null,       // 'correct'|'wrong'|'skip'
-  pendingMovement: null,    // { from, to, snakeFrom?, snakeTo?, ladderFrom?, ladderTo?, win }
+  // Game-phase machine
+  gamePhase: 'question',   // 'question'|'answerReveal'|'consequence'|'phaseTransition'
+
+  // Results after question evaluation
+  questionResults: [],      // Array of { playerIdx, answer, isCorrect, delta, movement }
+  pendingMovements: [],     // Array of movement objects for pawn animation
 
   // Timer
   timerActive: false,
@@ -81,82 +83,145 @@ export const useGameStore = create((set, get) => ({
   },
 
   phaseTransitionDone: () => {
-    set({ screen: 'playing', gamePhase: 'question' });
+    const state = get();
+    const q = state.questions[state.currentQuestionIndex];
+    set({
+      screen: 'playing',
+      gamePhase: 'question',
+      playerAnswers: { 0: null, 1: null, 2: null },
+      activeAnsweringPlayer: 0,
+      buzzLock: null,
+      timerActive: q.ruleset.timerSeconds > 0,
+      timeLeft: q.ruleset.timerSeconds,
+    });
   },
 
-  // ── Question answering (individual mode) ────────────────────────────────────
-  submitAnswer: (answer) => {
+  // ── Set player choice ────────────────────────────────────────────────────────
+  submitPlayerAnswer: (playerIdx, answer) => {
     const state = get();
-    const q     = state.questions[state.currentQuestionIndex];
-    const playerIdx = state.buzzLock !== null ? state.buzzLock : state.currentTurnPlayerIndex;
-    const isCorrect = answer === q.correctOption;
-    const result    = isCorrect ? 'correct' : 'wrong';
-    const delta     = isCorrect ? q.ruleset.correctDelta : q.ruleset.wrongDelta;
+    if (state.gamePhase !== 'question') return;
 
-    // Update player score
-    const updatedPlayers = [...state.players];
-    updatedPlayers[playerIdx] = applyScore(updatedPlayers[playerIdx], result, q.ruleset);
+    const updatedAnswers = { ...state.playerAnswers, [playerIdx]: answer };
+    const q = state.questions[state.currentQuestionIndex];
+    const isFFF = q.ruleset.mode === 'fastest-finger';
 
-    // Calculate movement
-    const from      = updatedPlayers[playerIdx].position;
-    const movement  = applyMovement(from, delta);
-    updatedPlayers[playerIdx] = { ...updatedPlayers[playerIdx], position: movement.newPos };
+    if (isFFF) {
+      // In FFF mode, once the buzzed player submits, evaluate immediately
+      set({ playerAnswers: updatedAnswers });
+      get().evaluateQuestion(updatedAnswers);
+    } else {
+      // In standard mode, check if all 3 players answered
+      const nextUnanswered = [0, 1, 2].find((i) => updatedAnswers[i] === null);
+      set({
+        playerAnswers: updatedAnswers,
+        activeAnsweringPlayer: nextUnanswered !== undefined ? nextUnanswered : state.activeAnsweringPlayer,
+      });
 
-    // Detect leader change
-    const prevLead = state.players.reduce((a, b) => a.position >= b.position ? a : b);
-    const newLead  = updatedPlayers.reduce((a, b) => a.position >= b.position ? a : b);
-    const leaderChanged = newLead.id !== prevLead.id;
-
-    set({
-      players: updatedPlayers,
-      selectedAnswer: answer,
-      answerResult: result,
-      gamePhase: 'answerReveal',
-      pendingMovement: movement,
-      timerActive: false,
-      leaderChanged,
-      prevLeaderId: prevLead.id,
-    });
-
-    // Check win
-    if (movement.win) {
-      set({ winner: updatedPlayers[playerIdx] });
+      if (nextUnanswered === undefined) {
+        // All 3 players answered → evaluate!
+        get().evaluateQuestion(updatedAnswers);
+      }
     }
   },
+
+  setActiveAnsweringPlayer: (idx) => set({ activeAnsweringPlayer: idx }),
 
   // ── FFF buzz-in ─────────────────────────────────────────────────────────────
   buzzIn: (playerIdx) => {
     const state = get();
     if (state.buzzLock !== null) return; // already locked
     if (state.gamePhase !== 'question') return;
-    set({ buzzLock: playerIdx, timerActive: false });
+    set({ buzzLock: playerIdx, activeAnsweringPlayer: playerIdx, timerActive: false });
   },
 
-  // ── Timer expired (FFF: no buzz) ────────────────────────────────────────────
-  timerExpired: () => {
+  // ── Evaluate question for all players ───────────────────────────────────────
+  evaluateQuestion: (answersToUse) => {
     const state = get();
-    if (state.gamePhase !== 'question') return;
-    // Skip question — no movement
+    const q = state.questions[state.currentQuestionIndex];
+    const answers = answersToUse || state.playerAnswers;
+    const isFFF = q.ruleset.mode === 'fastest-finger';
+
+    const updatedPlayers = [...state.players];
+    const questionResults = [];
+    const pendingMovements = [];
+
+    // Track previous leader
+    const prevLead = state.players.reduce((a, b) => (a.position >= b.position ? a : b));
+
+    if (isFFF) {
+      // In FFF mode, only the buzzed player is evaluated
+      const buzzedIdx = state.buzzLock;
+      if (buzzedIdx !== null) {
+        const pAnswer = answers[buzzedIdx];
+        const isCorrect = pAnswer === q.correctOption;
+        const delta = isCorrect ? q.ruleset.correctDelta : q.ruleset.wrongDelta;
+        const result = isCorrect ? 'correct' : 'wrong';
+
+        updatedPlayers[buzzedIdx] = applyScore(updatedPlayers[buzzedIdx], result, q.ruleset);
+        const from = state.players[buzzedIdx].position;
+        const movement = applyMovement(from, delta);
+        updatedPlayers[buzzedIdx] = { ...updatedPlayers[buzzedIdx], position: movement.newPos };
+
+        questionResults.push({ playerIdx: buzzedIdx, answer: pAnswer, isCorrect, delta, movement });
+        pendingMovements.push({ playerIdx: buzzedIdx, ...movement });
+      }
+    } else {
+      // Standard mode: evaluate all 3 players
+      [0, 1, 2].forEach((idx) => {
+        const pAnswer = answers[idx];
+        const isCorrect = pAnswer === q.correctOption;
+        const delta = pAnswer !== null
+          ? (isCorrect ? q.ruleset.correctDelta : q.ruleset.wrongDelta)
+          : q.ruleset.wrongDelta; // Unanswered treated as wrong
+        const result = isCorrect ? 'correct' : 'wrong';
+
+        updatedPlayers[idx] = applyScore(updatedPlayers[idx], result, q.ruleset);
+        const from = state.players[idx].position;
+        const movement = applyMovement(from, delta);
+        updatedPlayers[idx] = { ...updatedPlayers[idx], position: movement.newPos };
+
+        questionResults.push({ playerIdx: idx, answer: pAnswer, isCorrect, delta, movement });
+        pendingMovements.push({ playerIdx: idx, ...movement });
+      });
+    }
+
+    const newLead = updatedPlayers.reduce((a, b) => (a.position >= b.position ? a : b));
+    const leaderChanged = newLead.id !== prevLead.id;
+
+    // Check if anyone won
+    const winnerPlayer = updatedPlayers.find((p) => p.position >= 81);
+
     set({
-      selectedAnswer: null,
-      answerResult: 'skip',
+      players: updatedPlayers,
       gamePhase: 'answerReveal',
+      questionResults,
+      pendingMovements,
       timerActive: false,
-      pendingMovement: null,
+      leaderChanged,
+      prevLeaderId: prevLead.id,
+      winner: winnerPlayer || state.winner,
     });
   },
 
-  // ── After reveal → show consequence ─────────────────────────────────────────
+  // ── Timer expired ───────────────────────────────────────────────────────────
+  timerExpired: () => {
+    const state = get();
+    if (state.gamePhase !== 'question') return;
+    // Auto-evaluate current answers (unanswered count as wrong)
+    get().evaluateQuestion();
+  },
+
+  // ── Show consequence banner ──────────────────────────────────────────────────
   showConsequence: () => set({ gamePhase: 'consequence' }),
 
-  // ── After consequence → advance ─────────────────────────────────────────────
+  // ── Advance to next question ─────────────────────────────────────────────────
   advanceQuestion: () => {
     const state = get();
     const nextIdx = state.currentQuestionIndex + 1;
 
-    if (nextIdx >= state.questions.length) {
+    if (nextIdx >= state.questions.length || state.winner) {
       // Game over
-      const winner = determineWinner(state.players);
+      const winner = state.winner || determineWinner(state.players);
       set({ screen: 'endScreen', winner });
       return;
     }
@@ -165,37 +230,25 @@ export const useGameStore = create((set, get) => ({
     const nextPhase = nextQ.phaseId;
     const currPhase = state.questions[state.currentQuestionIndex].phaseId;
 
-    // Advance turn (individual mode) — FFF always stays all players
-    const nextTurn = nextQ.ruleset.mode === 'fastest-finger'
-      ? state.currentTurnPlayerIndex
-      : (state.currentTurnPlayerIndex + 1) % 3;
-
-    // New phase?
     if (nextPhase !== currPhase) {
       set({
         currentQuestionIndex: nextIdx,
-        currentTurnPlayerIndex: nextTurn,
+        playerAnswers: { 0: null, 1: null, 2: null },
+        activeAnsweringPlayer: 0,
         buzzLock: null,
-        selectedAnswer: null,
-        answerResult: null,
-        pendingMovement: null,
         gamePhase: 'phaseTransition',
         screen: 'phaseTransition',
         pendingPhaseId: nextPhase,
       });
     } else {
-      // Start next question
-      const q = state.questions[nextIdx];
       set({
         currentQuestionIndex: nextIdx,
-        currentTurnPlayerIndex: nextTurn,
+        playerAnswers: { 0: null, 1: null, 2: null },
+        activeAnsweringPlayer: 0,
         buzzLock: null,
-        selectedAnswer: null,
-        answerResult: null,
-        pendingMovement: null,
         gamePhase: 'question',
-        timerActive: q.ruleset.timerSeconds > 0,
-        timeLeft:    q.ruleset.timerSeconds,
+        timerActive: nextQ.ruleset.timerSeconds > 0,
+        timeLeft: nextQ.ruleset.timerSeconds,
       });
     }
   },

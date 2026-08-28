@@ -1,13 +1,11 @@
-import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useGameStore } from '../../store/gameStore.js';
 import { useSound } from '../../hooks/useSound.js';
 
 export default function PregameStoryScreen() {
-  const pregame    = useGameStore((s) => s.pregame);
+  const pregame     = useGameStore((s) => s.pregame);
   const beginPhase1 = useGameStore((s) => s.beginPhase1);
-  const sounds     = useSound();
-  const [revealed, setRevealed] = useState(false);
+  const sounds      = useSound();
 
   function handleBegin() {
     sounds.click();
@@ -25,13 +23,12 @@ export default function PregameStoryScreen() {
         padding: 24,
       }}
     >
-      {/* Subtle background texture */}
       <div style={{
         position: 'absolute', inset: 0,
         backgroundImage: 'url(/assets/game_start.png)',
         backgroundSize: 'cover',
         backgroundPosition: 'center',
-        opacity: 0.06,
+        opacity: 0.15,
         filter: 'blur(4px)',
       }} />
 
@@ -42,122 +39,100 @@ export default function PregameStoryScreen() {
         style={{
           position: 'relative',
           width: '100%',
-          maxWidth: 800,
+          maxWidth: 750,
           zIndex: 2,
+          background: 'linear-gradient(160deg, rgba(22, 14, 8, 0.94), rgba(12, 8, 5, 0.96))',
+          border: '2px solid rgba(245, 200, 66, 0.4)',
+          borderRadius: 16,
+          boxShadow: '0 16px 48px rgba(0,0,0,0.8), inset 0 1px 0 rgba(255,248,231,0.1)',
+          padding: '32px 36px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 16,
         }}
       >
-        {/* Outer frame — messages.png style */}
-        <div style={{ position: 'relative' }}>
-          <img
-            src="/assets/messages.png"
-            alt=""
-            style={{
-              width: '100%',
-              height: 'auto',
-              display: 'block',
-              filter: 'drop-shadow(0 16px 48px rgba(0,0,0,0.9))',
-            }}
-          />
-
-          {/* Story content overlaid on scroll */}
-          <div style={{
-            position: 'absolute',
-            top: '12%', left: '12%', right: '12%', bottom: '15%',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 12,
-            overflow: 'hidden',
-          }}>
-            {/* Title */}
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              style={{
-                fontFamily: 'Cinzel Decorative, serif',
-                fontSize: 'clamp(1rem, 2.5vw, 1.5rem)',
-                color: '#F5C842',
-                textAlign: 'center',
-                textShadow: '0 2px 12px rgba(0,0,0,0.7)',
-                lineHeight: 1.2,
-              }}
-            >
-              {pregame.title}
-            </motion.div>
-
-            {/* Divider */}
-            <div style={{ height: 1, background: 'rgba(245,200,66,0.4)', flexShrink: 0 }} />
-
-            {/* Story text — scroll reveal */}
-            <div style={{ flex: 1, overflowY: 'auto', paddingRight: 4 }}>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.5, duration: 0.6 }}
-                style={{
-                  fontFamily: 'Crimson Text, serif',
-                  fontStyle: 'italic',
-                  fontSize: 'clamp(0.82rem, 1.6vw, 1.05rem)',
-                  lineHeight: 1.6,
-                  color: '#FFF8E7',
-                  textShadow: '0 1px 4px rgba(0,0,0,0.6)',
-                  whiteSpace: 'pre-line',
-                }}
-              >
-                {pregame.text}
-              </motion.div>
-            </div>
-
-            {/* BEGIN button */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 1.0 }}
-              style={{ textAlign: 'center', flexShrink: 0, paddingTop: 4 }}
-            >
-              <motion.button
-                onClick={handleBegin}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.96 }}
-                transition={{ type: 'spring', stiffness: 500, damping: 25 }}
-                style={{
-                  background: 'linear-gradient(135deg, #C8640A, #D4952A)',
-                  border: '2px solid #F5C842',
-                  borderRadius: 8,
-                  padding: '10px 32px',
-                  fontFamily: 'Cinzel, serif',
-                  fontWeight: 700,
-                  fontSize: 'clamp(0.8rem, 1.5vw, 1rem)',
-                  color: '#FFF8E7',
-                  cursor: 'pointer',
-                  letterSpacing: 2,
-                  textTransform: 'uppercase',
-                  boxShadow: '0 4px 20px rgba(245,200,66,0.3)',
-                }}
-              >
-                Begin the Journey →
-              </motion.button>
-            </motion.div>
-          </div>
-        </div>
-
-        {/* Subtitle below frame */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8 }}
+        {/* Title */}
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
           style={{
+            fontFamily: 'Cinzel Decorative, serif',
+            fontSize: 'clamp(1.2rem, 3vw, 1.8rem)',
+            color: '#F5C842',
             textAlign: 'center',
-            fontFamily: 'Cinzel, serif',
-            fontSize: '0.65rem',
-            color: 'rgba(212,149,42,0.6)',
-            letterSpacing: 2,
-            marginTop: 12,
-            textTransform: 'uppercase',
+            textShadow: '0 2px 12px rgba(0,0,0,0.8)',
+            lineHeight: 1.2,
           }}
         >
+          {pregame.title}
+        </motion.div>
+
+        <div style={{ height: 1, background: 'rgba(245,200,66,0.3)', margin: '4px 0' }} />
+
+        {/* Story text */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.6 }}
+          style={{
+            fontFamily: 'Crimson Text, serif',
+            fontStyle: 'italic',
+            fontSize: 'clamp(0.9rem, 1.8vw, 1.12rem)',
+            lineHeight: 1.65,
+            color: '#FFF8E7',
+            textShadow: '0 1px 4px rgba(0,0,0,0.6)',
+            whiteSpace: 'pre-line',
+            maxHeight: '50vh',
+            overflowY: 'auto',
+            paddingRight: 8,
+          }}
+        >
+          {pregame.text}
+        </motion.div>
+
+        {/* BEGIN button */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.7 }}
+          style={{ textAlign: 'center', marginTop: 12 }}
+        >
+          <motion.button
+            onClick={handleBegin}
+            whileHover={{ scale: 1.04 }}
+            whileTap={{ scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+            style={{
+              background: 'linear-gradient(135deg, #C8640A, #D4952A)',
+              border: '2px solid #F5C842',
+              borderRadius: 8,
+              padding: '12px 36px',
+              fontFamily: 'Cinzel, serif',
+              fontWeight: 700,
+              fontSize: 'clamp(0.85rem, 1.6vw, 1.05rem)',
+              color: '#FFF8E7',
+              cursor: 'pointer',
+              letterSpacing: 2,
+              textTransform: 'uppercase',
+              boxShadow: '0 4px 20px rgba(245,200,66,0.35)',
+            }}
+          >
+            Begin the Journey →
+          </motion.button>
+        </motion.div>
+
+        <p style={{
+          textAlign: 'center',
+          fontFamily: 'Cinzel, serif',
+          fontSize: '0.65rem',
+          color: 'rgba(212,149,42,0.6)',
+          letterSpacing: 2,
+          margin: 0,
+          textTransform: 'uppercase',
+        }}>
           25 Questions · 5 Phases · One Supply Chain Crisis
-        </motion.p>
+        </p>
       </motion.div>
     </div>
   );
