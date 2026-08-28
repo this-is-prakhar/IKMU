@@ -33,20 +33,20 @@ export default function OpeningScreen() {
       {/* Particle layer */}
       <ParticleLayer />
 
-      {/* START GAME Button positioned cleanly on the RIGHT to avoid clashing with the central title */}
+      {/* START GAME Button centered on the Y-axis on the right */}
       <motion.div
         initial={{ opacity: 0, scale: 0.8, x: 30 }}
         animate={{ opacity: 1, scale: 1, x: 0 }}
         transition={{ type: 'spring', stiffness: 220, damping: 20, delay: 0.3 }}
         style={{
           position: 'absolute',
-          right: 'clamp(20px, 4.5vw, 60px)',
-          bottom: 'clamp(24px, 5vh, 60px)',
+          right: 'clamp(24px, 5vw, 70px)',
+          top: '50%',
+          transform: 'translateY(-50%)',
           zIndex: 10,
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: 6,
         }}
       >
         <motion.img
@@ -56,17 +56,17 @@ export default function OpeningScreen() {
           whileHover={{ scale: 1.08, filter: 'drop-shadow(0 8px 28px rgba(245,200,66,0.85))' }}
           whileTap={{ scale: 0.93 }}
           animate={{
-            y: [0, -4, 0],
+            y: [0, -6, 0],
           }}
           transition={{
             y: { duration: 2.2, repeat: Infinity, ease: 'easeInOut' },
             scale: { type: 'spring', stiffness: 400, damping: 20 },
           }}
           style={{
-            width: 'clamp(170px, 20vw, 260px)',
+            width: 'clamp(180px, 22vw, 290px)',
             height: 'auto',
             cursor: 'pointer',
-            filter: 'drop-shadow(0 6px 20px rgba(245,200,66,0.6))',
+            filter: 'drop-shadow(0 6px 24px rgba(245,200,66,0.65))',
             display: 'block',
           }}
         />
