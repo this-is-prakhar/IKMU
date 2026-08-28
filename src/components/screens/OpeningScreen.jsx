@@ -14,24 +14,10 @@ export default function OpeningScreen() {
 
   return (
     <div className="screen" style={{ background: '#0D0906' }}>
-      {/* Background image — panning */}
-      <motion.div
-        style={{
-          position: 'absolute', inset: 0,
-          backgroundImage: 'url(/assets/game_start.png)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center center',
-          backgroundRepeat: 'no-repeat',
-          filter: 'brightness(0.55) saturate(1.2)',
-        }}
-        animate={{ backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'] }}
-        transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
-      />
-
-      {/* Dark vignette */}
+      {/* Subtle dark radial background — no duplicate image */}
       <div style={{
         position: 'absolute', inset: 0,
-        background: 'radial-gradient(ellipse at center, transparent 30%, rgba(13,9,6,0.8) 100%)',
+        background: 'radial-gradient(ellipse at 50% 40%, #1C0E06 0%, #0D0906 100%)',
       }} />
 
       {/* Particle layer */}
@@ -48,7 +34,7 @@ export default function OpeningScreen() {
         height: '100%',
         gap: 28,
       }}>
-        {/* Title logo */}
+        {/* Single clear & sharp title image */}
         <motion.div
           initial={{ y: 60, opacity: 0, scale: 0.9 }}
           animate={{ y: 0, opacity: 1, scale: 1 }}
@@ -86,15 +72,26 @@ export default function OpeningScreen() {
           Supply Chain Snakes &amp; Ladders · A Story-Driven Quiz Game
         </motion.div>
 
-        {/* START GAME button */}
+        {/* START GAME button — uses game_start_button.png */}
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
         >
-          <button className="start-game-btn" onClick={handleStart}>
-            START GAME
-          </button>
+          <motion.img
+            src="/assets/game_start_button.png"
+            alt="Start Game"
+            onClick={handleStart}
+            whileHover={{ scale: 1.06 }}
+            whileTap={{ scale: 0.94 }}
+            style={{
+              width: 'clamp(180px, 28vw, 280px)',
+              height: 'auto',
+              cursor: 'pointer',
+              filter: 'drop-shadow(0 4px 16px rgba(245,200,66,0.4))',
+              display: 'block',
+            }}
+          />
         </motion.div>
 
         {/* Players hint */}
